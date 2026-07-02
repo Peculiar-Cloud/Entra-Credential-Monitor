@@ -75,9 +75,11 @@ jobs:
 
 - `latest`: latest GitHub release.
 - `main`: latest successful build from `main`.
-- `vX.Y.Z`: release tag.
 - `X.Y.Z`, `X.Y`, and `X`: semantic-version aliases.
-- `sha-<commit>`: immutable commit build.
+
+The package also has a weekly cleanup workflow that deletes old unreferenced
+untagged versions and retired `sha-*` versions while preserving platform
+manifests referenced by active tags.
 
 ## Verify Published Images
 
