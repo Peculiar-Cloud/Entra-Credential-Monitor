@@ -48,6 +48,18 @@ describe('renderReportHtml — document + all-clear', () => {
     expect(html).not.toContain('<script>alert(1)</script>')
     expect(html).toContain('&lt;script&gt;')
   })
+
+  it('uses custom report branding and timezone', () => {
+    const html = renderReportHtml(emptyFindings(), {
+      graceDays: 90,
+      timezone: 'UTC',
+      brand: { name: 'Contoso Security', url: 'https://security.contoso.example' },
+    })
+    expect(html).toContain('Contoso Security')
+    expect(html).toContain('security.contoso.example')
+    expect(html).toContain('UTC')
+    expect(html).not.toContain('peculiar.cloud')
+  })
 })
 
 describe('renderReportHtml — issues tables', () => {

@@ -76,6 +76,10 @@ jobs:
           WARNING_DAYS: ${{ vars.WARNING_DAYS || '30' }}
           SELF_MONITORING_WARNING_DAYS: ${{ vars.SELF_MONITORING_WARNING_DAYS || '60' }}
           EXPIRED_GRACE_DAYS: ${{ vars.EXPIRED_GRACE_DAYS || '90' }}
+          REPORT_TIMEZONE: ${{ vars.REPORT_TIMEZONE || 'America/New_York' }}
+          REPORT_BRAND_NAME: ${{ vars.REPORT_BRAND_NAME || 'Peculiar Cloud' }}
+          REPORT_BRAND_URL: ${{ vars.REPORT_BRAND_URL || 'https://peculiar.cloud' }}
+          LOG_LEVEL: ${{ vars.LOG_LEVEL || 'info' }}
           ALWAYS_SEND_REPORT: ${{ inputs.always_send_report || 'false' }}
           HEALTHCHECKS_PING_URL: ${{ secrets.HEALTHCHECKS_PING_URL }}
         run: node dist/run.js

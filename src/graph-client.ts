@@ -16,9 +16,7 @@ import {
   PageIterator,
 } from '@microsoft/microsoft-graph-client'
 import type { z } from 'zod'
-
-const GRAPH_SCOPE = 'https://graph.microsoft.com/.default'
-
+import { consoleLogger, type Logger } from './logger.js'
 import {
   type Application,
   ApplicationSchema,
@@ -26,6 +24,8 @@ import {
   type ServicePrincipal,
   ServicePrincipalSchema,
 } from './schemas.js'
+
+const GRAPH_SCOPE = 'https://graph.microsoft.com/.default'
 
 interface GraphApiResponse<T> {
   value: T[]
@@ -38,11 +38,19 @@ interface CredentialBearing {
 
 export class GraphClient {
   private readonly client: Client
+  private readonly logger: Logger
 
   // The optional `client` parameter is a test seam: production constructs the
   // SDK client from the credential; tests inject a fake to drive the real
   // PageIterator without real network calls.
-  constructor(tenantId: string, clientId: string, clientSecret: string, client?: Client) {
+  constructor(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string,
+    client?: Client,
+    logger: Logger = consoleLogger,
+  ) {
+    this.logger = logger
     if (client) {
       this.client = client
       return
@@ -84,7 +92,9 @@ export class GraphClient {
         out.push(parsed.data)
       } else {
         skipped++
-        console.warn(`Skipping malformed ${label} from Graph: ${parsed.error.issues[0]?.message}`)
+        this.logger.warn(
+          `Skipping malformed ${label} from Graph: ${parsed.error.issues[0]?.message}`,
+        )
       }
       return true
     })
@@ -92,7 +102,7 @@ export class GraphClient {
     await iterator.iterate()
 
     if (skipped > 0) {
-      console.warn(`Skipped ${skipped} malformed ${label} record(s) returned by Graph`)
+      this.logger.warn(`Skipped ${skipped} malformed ${label} record(s) returned by Graph`)
     }
 
     return out
@@ -140,7 +150,7 @@ export class GraphClient {
 
     const all = await this.collectAll(request, ApplicationSchema, 'application')
     const filtered = this.filterActionable(all, warningDays)
-    console.log(
+    this.logger.info(
       `Filtered from ${all.length} to ${filtered.length} applications with actionable credentials`,
     )
     return { value: filtered }
@@ -157,7 +167,7 @@ export class GraphClient {
 
     const all = await this.collectAll(request, ServicePrincipalSchema, 'service principal')
     const filtered = this.filterActionable(all, warningDays)
-    console.log(
+    this.logger.info(
       `Filtered from ${all.length} to ${filtered.length} service principals with actionable credentials`,
     )
     return { value: filtered }
@@ -169,7 +179,7 @@ export class GraphClient {
     try {
       return await this.client.api('/organization').select('displayName,verifiedDomains').get()
     } catch (error) {
-      console.warn('Could not get organization info:', (error as Error).message)
+      this.logger.warn({ err: error }, 'Could not get organization info')
       return null
     }
   }

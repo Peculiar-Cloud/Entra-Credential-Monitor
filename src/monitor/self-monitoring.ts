@@ -1,5 +1,6 @@
 import { differenceInDays, format, parseISO } from 'date-fns'
 import type { GraphClient } from '../graph-client.js'
+import { consoleLogger, type Logger } from '../logger.js'
 import type { Application, Credential, EnvConfig, SelfMonitoringAlert } from '../schemas.js'
 
 type SelfMonitoringEnv = Pick<EnvConfig, 'SELF_MONITORING_WARNING_DAYS' | 'ENTRA_CLIENT_ID'>
@@ -12,12 +13,14 @@ interface CheckSelfMonitoringParams {
   env: SelfMonitoringEnv
   applications: ApplicationsResponse | null
   graphClient: GraphClient
+  logger?: Logger
 }
 
 export async function checkSelfMonitoring({
   env,
   applications,
   graphClient,
+  logger = consoleLogger,
 }: CheckSelfMonitoringParams): Promise<SelfMonitoringAlert[]> {
   const alerts: SelfMonitoringAlert[] = []
   const warningDays = env.SELF_MONITORING_WARNING_DAYS
@@ -33,12 +36,12 @@ export async function checkSelfMonitoring({
     if (applications?.value) {
       app = applications.value.find((candidate) => candidate.appId === clientId) ?? null
       if (app) {
-        console.log('Using existing application data for self-monitoring check')
+        logger.info('Using existing application data for self-monitoring check')
       }
     }
 
     if (!app) {
-      console.log('Making additional API call for self-monitoring check')
+      logger.info('Making additional API call for self-monitoring check')
       const selfApp = await graphClient.makeRequest<ApplicationsResponse>(
         `/applications?$filter=appId eq '${clientId}'&$select=id,appId,displayName,passwordCredentials,keyCredentials`,
       )

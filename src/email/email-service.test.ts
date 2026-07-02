@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { createLogger } from '../logger.js'
 import type { Findings } from '../schemas.js'
 import { sendMonitoringReport } from './email-service.js'
 
@@ -46,21 +47,25 @@ const baseEnv = {
   ALWAYS_SEND_REPORT: false,
 } as never
 
+const silentLogger = createLogger('silent')
+
 describe('sendMonitoringReport recipient handling', () => {
   it('throws an EmailError when there are issues to deliver but no recipients', async () => {
-    await expect(sendMonitoringReport(baseEnv, findingsWithIssues())).rejects.toMatchObject({
+    await expect(
+      sendMonitoringReport(baseEnv, findingsWithIssues(), silentLogger),
+    ).rejects.toMatchObject({
       emailError: true,
     })
   })
 
   it('throws when ALWAYS_SEND_REPORT is set but recipients are empty', async () => {
     const env = { ...baseEnv, ALWAYS_SEND_REPORT: true } as never
-    await expect(sendMonitoringReport(env, emptyFindings())).rejects.toMatchObject({
+    await expect(sendMonitoringReport(env, emptyFindings(), silentLogger)).rejects.toMatchObject({
       emailError: true,
     })
   })
 
   it('returns false (legitimate skip) when there is nothing to send and no recipients', async () => {
-    await expect(sendMonitoringReport(baseEnv, emptyFindings())).resolves.toBe(false)
+    await expect(sendMonitoringReport(baseEnv, emptyFindings(), silentLogger)).resolves.toBe(false)
   })
 })

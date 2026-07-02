@@ -3,6 +3,9 @@ import type { CredentialFinding, Findings } from '../../schemas.js'
 import {
   generateAzurePortalUrl,
   generateSubject,
+  getBrandDisplayUrl,
+  getBrandName,
+  getBrandPlainTextUrl,
   getBrandUrl,
   getCriticalCount,
   getLogoUrl,
@@ -68,6 +71,40 @@ describe('getBrandUrl', () => {
     expect(getBrandUrl()).toBe(
       'https://peculiar.cloud?utm_source=entra_credential_monitor&utm_medium=email&utm_campaign=report_footer',
     )
+  })
+
+  it('uses custom brand URLs without adding tracking parameters', () => {
+    expect(getBrandUrl({ brand: { name: 'Contoso', url: 'https://contoso.example' } })).toBe(
+      'https://contoso.example',
+    )
+  })
+})
+
+describe('getBrandPlainTextUrl', () => {
+  it('keeps the default plaintext footer URL clean', () => {
+    expect(getBrandPlainTextUrl()).toBe('https://peculiar.cloud')
+  })
+
+  it('uses custom brand URLs unchanged', () => {
+    expect(
+      getBrandPlainTextUrl({ brand: { name: 'Contoso', url: 'https://contoso.example' } }),
+    ).toBe('https://contoso.example')
+  })
+})
+
+describe('getBrandName', () => {
+  it('uses the configured report brand name', () => {
+    expect(
+      getBrandName({ brand: { name: 'Contoso Security', url: 'https://contoso.example' } }),
+    ).toBe('Contoso Security')
+  })
+})
+
+describe('getBrandDisplayUrl', () => {
+  it('returns a clean display host from the configured brand URL', () => {
+    expect(
+      getBrandDisplayUrl({ brand: { name: 'Contoso', url: 'https://www.contoso.example/path' } }),
+    ).toBe('contoso.example')
   })
 })
 

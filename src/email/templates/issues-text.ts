@@ -1,11 +1,15 @@
-import { format } from 'date-fns'
 import type { CredentialFinding, Findings } from '../../schemas.js'
 import {
+  formatDateInTimeZone,
+  formatTimeInTimeZone,
   generateAzurePortalUrl,
-  getBrandUrl,
+  getBrandName,
+  getBrandPlainTextUrl,
   getCriticalCount,
   getTotalApps,
   getWarningCount,
+  normalizeReportOptions,
+  type ReportRenderInput,
 } from './helpers.js'
 import { partitionByAge } from './partition.js'
 
@@ -17,14 +21,16 @@ interface AppItem extends CredentialFinding {
   daysExpired?: number
 }
 
-export function buildIssuesText(findings: Findings, graceDays: number = 90): string {
+export function buildIssuesText(findings: Findings, optionsInput: ReportRenderInput = {}): string {
+  const options = normalizeReportOptions(optionsInput)
   const criticalCount = getCriticalCount(findings)
   const warningCount = getWarningCount(findings)
   const totalApps = getTotalApps(findings)
   const organizationInfo = findings.organizationInfo
+  const now = options.generatedAt
 
   let text = `
-Entra ID Security Report - ${format(new Date(), 'MMMM d, yyyy')}
+Entra ID Security Report - ${formatDateInTimeZone(now, options.timezone)}
 ${organizationInfo ? `${organizationInfo.displayName}\n` : ''}
 ACTION REQUIRED
 
@@ -79,7 +85,7 @@ Summary: ${criticalCount} critical issues, ${warningCount} warnings (${totalApps
     }
   }
 
-  const { expiringSoon, recentlyExpired, longExpired } = partitionByAge(findings, graceDays)
+  const { expiringSoon, recentlyExpired, longExpired } = partitionByAge(findings, options.graceDays)
 
   const warningItems = expiringSoon as AppItem[]
   if (warningItems.length > 0) {
@@ -114,7 +120,7 @@ Summary: ${criticalCount} critical issues, ${warningCount} warnings (${totalApps
 
   const longItems = longExpired as AppItem[]
   if (longItems.length > 0) {
-    text += `LONG-EXPIRED (${longItems.length}) - expired more than ${graceDays} days ago, listed for reference:\n`
+    text += `LONG-EXPIRED (${longItems.length}) - expired more than ${options.graceDays} days ago, listed for reference:\n`
     longItems.forEach((item) => {
       text += `- ${item.displayName} (${item.appId}) - expired ${item.expiredDate} (${item.daysExpired ?? '?'} days ago)\n`
     })
@@ -123,10 +129,10 @@ Summary: ${criticalCount} critical issues, ${warningCount} warnings (${totalApps
 
   text += `
 --
-Peculiar Cloud • Entra ID Security Monitoring
+${getBrandName(options)} • Entra ID Security Monitoring
 This automated security report helps maintain application security across your organization.
-Generated on ${format(new Date(), 'MMMM d, yyyy')} at ${format(new Date(), 'HH:mm')} UTC
-Visit: ${getBrandUrl()}
+Generated on ${formatDateInTimeZone(now, options.timezone)} at ${formatTimeInTimeZone(now, options.timezone)}
+Visit: ${getBrandPlainTextUrl(options)}
 `
 
   return text

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   ApplicationSchema,
   CredentialFindingSchema,
@@ -102,6 +102,9 @@ describe('EnvConfigSchema', () => {
       expect(result.data.WARNING_DAYS).toBe(30)
       expect(result.data.SELF_MONITORING_WARNING_DAYS).toBe(60)
       expect(result.data.ALWAYS_SEND_REPORT).toBe(false)
+      expect(result.data.REPORT_TIMEZONE).toBe('America/New_York')
+      expect(result.data.REPORT_BRAND_NAME).toBe('Peculiar Cloud')
+      expect(result.data.REPORT_BRAND_URL).toBe('https://peculiar.cloud')
     }
   })
 
@@ -147,6 +150,26 @@ describe('EnvConfigSchema', () => {
     if (result.success) {
       expect(result.data.ALWAYS_SEND_REPORT).toBe(true)
     }
+  })
+
+  it('accepts custom report presentation settings', () => {
+    const result = EnvConfigSchema.safeParse({
+      REPORT_TIMEZONE: 'UTC',
+      REPORT_BRAND_NAME: 'Contoso Security',
+      REPORT_BRAND_URL: 'https://security.contoso.example',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.REPORT_TIMEZONE).toBe('UTC')
+      expect(result.data.REPORT_BRAND_NAME).toBe('Contoso Security')
+      expect(result.data.REPORT_BRAND_URL).toBe('https://security.contoso.example')
+    }
+  })
+
+  it('rejects invalid report presentation settings', () => {
+    expect(EnvConfigSchema.safeParse({ REPORT_TIMEZONE: 'Not/AZone' }).success).toBe(false)
+    expect(EnvConfigSchema.safeParse({ REPORT_BRAND_NAME: '' }).success).toBe(false)
+    expect(EnvConfigSchema.safeParse({ REPORT_BRAND_URL: 'not-a-url' }).success).toBe(false)
   })
 })
 
@@ -325,16 +348,6 @@ describe('GraphErrorSchema', () => {
 })
 
 describe('parseTenantConfigs', () => {
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>
-
-  beforeEach(() => {
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  })
-
-  afterEach(() => {
-    consoleErrorSpy.mockRestore()
-  })
-
   it('parses JSON array format', () => {
     const tenants = [
       {
@@ -396,6 +409,16 @@ describe('parseTenantConfigs', () => {
         ENTRA_CLIENT_SECRET: 'my-secret',
       }),
     ).toThrow(/ENTRA_TENANTS/)
+  })
+
+  it('throws when single-tenant variables fail validation', () => {
+    expect(() =>
+      parseTenantConfigs({
+        ENTRA_TENANT_ID: 'not-a-guid',
+        ENTRA_CLIENT_ID: '87654321-4321-4321-4321-210987654321',
+        ENTRA_CLIENT_SECRET: 'my-secret',
+      }),
+    ).toThrow(/Single-tenant configuration/)
   })
 
   it('prefers JSON format over single tenant', () => {

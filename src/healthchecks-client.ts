@@ -5,14 +5,18 @@
  * healthchecks.io being unreachable must not fail the monitoring run.
  */
 
+import { consoleLogger, type Logger } from './logger.js'
+
 const MAX_FAIL_BODY_LENGTH = 500
 const PING_TIMEOUT_MS = 10_000
 
 export class HealthchecksClient {
   private readonly enabled: boolean
   private readonly pingUrl: string | undefined
+  private readonly logger: Logger
 
-  constructor(slug: string | undefined) {
+  constructor(slug: string | undefined, logger: Logger = consoleLogger) {
+    this.logger = logger
     this.enabled = !!slug && slug.trim().length > 0
     if (this.enabled && slug) {
       // Slug can be a bare UUID/slug or a full URL.
@@ -40,22 +44,22 @@ export class HealthchecksClient {
         signal: AbortSignal.timeout(PING_TIMEOUT_MS),
       })
       if (!response.ok) {
-        console.warn(`Healthchecks.io ping failed with status ${response.status}`)
+        this.logger.warn(`Healthchecks.io ping failed with status ${response.status}`)
       }
     } catch (error) {
-      console.warn('Healthchecks.io ping error:', (error as Error).message)
+      this.logger.warn({ err: error }, 'Healthchecks.io ping error')
     }
   }
 
   async start(): Promise<void> {
     if (!this.enabled) return
-    console.log('Sending start ping to healthchecks.io...')
+    this.logger.info('Sending start ping to healthchecks.io...')
     await this.ping('/start')
   }
 
   async success(): Promise<void> {
     if (!this.enabled) return
-    console.log('Sending success ping to healthchecks.io...')
+    this.logger.info('Sending success ping to healthchecks.io...')
     await this.ping('')
   }
 
@@ -65,7 +69,7 @@ export class HealthchecksClient {
    */
   async fail(error: Error | null): Promise<void> {
     if (!this.enabled) return
-    console.log('Sending failure ping to healthchecks.io...')
+    this.logger.info('Sending failure ping to healthchecks.io...')
     const message = error?.message ? error.message.slice(0, MAX_FAIL_BODY_LENGTH) : 'Unknown error'
     await this.ping('/fail', message)
   }

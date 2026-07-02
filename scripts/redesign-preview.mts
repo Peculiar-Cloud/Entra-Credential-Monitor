@@ -7,10 +7,8 @@
  *
  *   pnpm exec tsx --env-file=.env.local scripts/redesign-preview.mts
  *
- * Or with a secret manager that injects environment variables:
- *
- *   op run --env-file=.env.shared --env-file=.env.tenant -- \
- *     pnpm exec tsx scripts/redesign-preview.mts
+ * Secret managers work too; the script only requires the final process
+ * environment to contain the variables documented in .env.example.
  */
 
 import { writeFile } from 'node:fs/promises'
@@ -28,7 +26,7 @@ async function main(): Promise<void> {
   const tenants = parseTenantConfigs(env)
   if (tenants.length === 0) {
     throw new Error(
-      'No tenant configured. Run under op with both env files, e.g.\n' +
+      'No tenant configured. Fill .env.local, then run:\n' +
         '  pnpm exec tsx --env-file=.env.local scripts/redesign-preview.mts',
     )
   }
@@ -46,7 +44,14 @@ async function main(): Promise<void> {
     ENTRA_CLIENT_ID: tenant.clientId,
   })) as Findings
 
-  const html = renderReportHtml(findings, env.EXPIRED_GRACE_DAYS)
+  const html = renderReportHtml(findings, {
+    graceDays: env.EXPIRED_GRACE_DAYS,
+    timezone: env.REPORT_TIMEZONE,
+    brand: {
+      name: env.REPORT_BRAND_NAME,
+      url: env.REPORT_BRAND_URL,
+    },
+  })
 
   const slug = tenant.name
     .toLowerCase()

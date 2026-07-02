@@ -42,6 +42,7 @@ does not bundle dotenv.
 - `src/schemas.ts` - Zod schemas for env config and Graph responses; the single
   source of valid env var names.
 - `src/github-actions.ts` - GitHub/Forgejo-compatible log and summary helpers.
+- `src/logger.ts` - Pino logger wiring; use `LOG_LEVEL` for runtime verbosity.
 
 ## Conventions
 

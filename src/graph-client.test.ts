@@ -2,6 +2,7 @@ import type { Client } from '@microsoft/microsoft-graph-client'
 import { addDays, subDays } from 'date-fns'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GraphClient } from './graph-client.js'
+import { createLogger } from './logger.js'
 
 /**
  * A fake Graph request builder that records the fluent calls and returns a
@@ -53,18 +54,15 @@ describe('GraphClient.getApplicationsWithCredentials', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2025-01-15T00:00:00Z'))
-    vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
     vi.useRealTimers()
-    vi.restoreAllMocks()
   })
 
   it('selects and expands the expected fields with a 999 page size', async () => {
     const { client, calls } = makeFakeClient({ '/applications': [] })
-    const gc = new GraphClient('t', 'c', 's', client)
+    const gc = new GraphClient('t', 'c', 's', client, createLogger('silent'))
 
     await gc.getApplicationsWithCredentials(30)
 
@@ -93,7 +91,7 @@ describe('GraphClient.getApplicationsWithCredentials', () => {
       }),
     ]
     const { client } = makeFakeClient({ '/applications': apps })
-    const gc = new GraphClient('t', 'c', 's', client)
+    const gc = new GraphClient('t', 'c', 's', client, createLogger('silent'))
 
     const result = await gc.getApplicationsWithCredentials(30)
 
@@ -109,7 +107,7 @@ describe('GraphClient.getApplicationsWithCredentials', () => {
       }),
     ]
     const { client } = makeFakeClient({ '/applications': apps })
-    const gc = new GraphClient('t', 'c', 's', client)
+    const gc = new GraphClient('t', 'c', 's', client, createLogger('silent'))
 
     const result = await gc.getApplicationsWithCredentials(30)
 
@@ -126,7 +124,7 @@ describe('GraphClient.getApplicationsWithCredentials', () => {
       { id: 'x', displayName: 'missing appId and creds shape', appId: 12345 }, // appId wrong type
     ]
     const { client } = makeFakeClient({ '/applications': apps })
-    const gc = new GraphClient('t', 'c', 's', client)
+    const gc = new GraphClient('t', 'c', 's', client, createLogger('silent'))
 
     const result = await gc.getApplicationsWithCredentials(30)
 

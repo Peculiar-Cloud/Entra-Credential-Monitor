@@ -13,6 +13,7 @@ import type { CredentialFinding, Findings } from '../src/schemas.js'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const out = join(root, 'docs', 'example-report.html')
+const generatedAt = new Date('2026-07-02T12:00:00.000Z')
 
 function isoDate(daysFromNow: number): string {
   const date = new Date('2026-07-02T12:00:00.000Z')
@@ -111,5 +112,5 @@ const findings: Findings = {
 }
 
 await mkdir(dirname(out), { recursive: true })
-await writeFile(out, renderReportHtml(findings, 90), 'utf8')
+await writeFile(out, renderReportHtml(findings, { graceDays: 90, generatedAt }), 'utf8')
 console.log(out)

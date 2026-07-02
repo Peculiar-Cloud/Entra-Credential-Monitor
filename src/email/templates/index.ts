@@ -1,6 +1,13 @@
 import type { Findings } from '../../schemas.js'
 import { buildAllClearText } from './all-clear.js'
-import { generateSubject, hasAnyIssues, onlyHasSelfMonitoringIssues } from './helpers.js'
+import {
+  generateSubject,
+  getBrandName,
+  hasAnyIssues,
+  normalizeReportOptions,
+  onlyHasSelfMonitoringIssues,
+  type ReportRenderInput,
+} from './helpers.js'
 import { buildIssuesText } from './issues-text.js'
 import { renderReportHtml } from './report-html.js'
 
@@ -20,37 +27,36 @@ export interface EmailReport {
  * all three states; only the subject line and the plaintext body differ per
  * variant.
  */
-export function generateReport(findings: Findings, graceDays = 90): EmailReport {
-  const html = renderReportHtml(findings, graceDays)
+export function generateReport(
+  findings: Findings,
+  optionsInput: ReportRenderInput = {},
+): EmailReport {
+  const options = normalizeReportOptions(optionsInput)
+  const html = renderReportHtml(findings, options)
+  const subjectPrefix = `${getBrandName(options)}: Entra ID Security Report`
 
   if (!hasAnyIssues(findings)) {
     return {
-      subject: generateSubject(
-        'Peculiar Cloud: Entra ID Security Report - All Clear',
-        findings.organizationInfo,
-      ),
+      subject: generateSubject(`${subjectPrefix} - All Clear`, findings.organizationInfo),
       html,
-      text: buildAllClearText(findings.organizationInfo),
+      text: buildAllClearText(findings.organizationInfo, options),
     }
   }
 
   if (findings.selfMonitoringAlerts.length > 0 && onlyHasSelfMonitoringIssues(findings)) {
     return {
       subject: generateSubject(
-        'Peculiar Cloud: Entra ID Security Report - Monitoring System Alert',
+        `${subjectPrefix} - Monitoring System Alert`,
         findings.organizationInfo,
       ),
       html,
-      text: buildIssuesText(findings, graceDays),
+      text: buildIssuesText(findings, options),
     }
   }
 
   return {
-    subject: generateSubject(
-      'Peculiar Cloud: Entra ID Security Report - Action Required',
-      findings.organizationInfo,
-    ),
+    subject: generateSubject(`${subjectPrefix} - Action Required`, findings.organizationInfo),
     html,
-    text: buildIssuesText(findings, graceDays),
+    text: buildIssuesText(findings, options),
   }
 }
