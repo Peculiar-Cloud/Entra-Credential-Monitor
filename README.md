@@ -3,7 +3,7 @@
 [![CI](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-1A1F6C.svg)](renovate.json)
-[![Peculiar Cloud](https://img.shields.io/badge/by-Peculiar%20Cloud-111827)](https://peculiar.cloud?utm_source=github&utm_medium=referral&utm_campaign=entra_credential_monitor)
+[![Peculiar Cloud](https://img.shields.io/badge/by-Peculiar%20Cloud-111827)](https://peculiar.cloud)
 
 Scheduled credential-expiration monitoring for Microsoft Entra ID app
 registrations and service principals.
@@ -237,7 +237,7 @@ Report security issues privately. See [SECURITY.md](SECURITY.md).
 Community issues and pull requests are welcome. For implementation help,
 identity-security automation, monitoring design, or Microsoft Entra hardening,
 contact Peculiar Cloud at
-<https://peculiar.cloud?utm_source=github&utm_medium=referral&utm_campaign=entra_credential_monitor>.
+<https://peculiar.cloud>.
 
 ## License
 
