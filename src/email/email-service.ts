@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { consoleLogger, type Logger } from '../logger.js'
 import type { EnvConfig, Findings } from '../schemas.js'
 import { resolveErrorRecipients, resolveReportRecipients } from './recipients.js'
 import { generateReport, hasAnyIssues } from './templates/index.js'
@@ -24,12 +25,10 @@ type EmailEnv = Pick<
   | 'EMAIL_RECIPIENTS'
   | 'ALWAYS_SEND_REPORT'
   | 'EXPIRED_GRACE_DAYS'
+  | 'REPORT_TIMEZONE'
+  | 'REPORT_BRAND_NAME'
+  | 'REPORT_BRAND_URL'
 >
-
-interface Logger {
-  log?: (message: string) => void
-  warn?: (message: string) => void
-}
 
 function createEmailError(message: string): EmailError {
   return new EmailError(message)
@@ -53,7 +52,7 @@ function createResendClient(env: EmailEnv): Resend {
 export async function sendMonitoringReport(
   env: EmailEnv,
   findings: Findings,
-  logger: Logger = console,
+  logger: Logger = consoleLogger,
 ): Promise<boolean> {
   const recipients = resolveReportRecipients(env, findings, logger)
   if (recipients.length === 0) {
@@ -69,10 +68,17 @@ export async function sendMonitoringReport(
 
   const sender = ensureSenderEmail(env)
   const resend = createResendClient(env)
-  const emailContent = generateReport(findings, env.EXPIRED_GRACE_DAYS)
+  const emailContent = generateReport(findings, {
+    graceDays: env.EXPIRED_GRACE_DAYS,
+    timezone: env.REPORT_TIMEZONE,
+    brand: {
+      name: env.REPORT_BRAND_NAME,
+      url: env.REPORT_BRAND_URL,
+    },
+  })
 
-  logger.log?.(`Sending email to ${recipients.length} recipient(s)`)
-  logger.log?.(`Subject: ${emailContent.subject}`)
+  logger.info(`Sending email to ${recipients.length} recipient(s)`)
+  logger.info(`Subject: ${emailContent.subject}`)
 
   const { error } = await resend.emails.send({
     from: sender,
@@ -94,7 +100,7 @@ export async function sendErrorNotification(
   subject: string,
   htmlBody: string,
   textBody: string,
-  logger: Logger = console,
+  logger: Logger = consoleLogger,
 ): Promise<boolean> {
   const recipients = resolveErrorRecipients(env, logger)
   if (recipients.length === 0) {
@@ -103,7 +109,7 @@ export async function sendErrorNotification(
 
   const sender = ensureSenderEmail(env)
   const resend = createResendClient(env)
-  logger.log?.('Sending error notification')
+  logger.info('Sending error notification')
 
   const { error } = await resend.emails.send({
     from: sender,

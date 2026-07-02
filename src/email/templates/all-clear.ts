@@ -1,14 +1,25 @@
-import { formatDateEST, formatTimeEST, getBrandUrl } from './helpers.js'
+import {
+  formatDateInTimeZone,
+  formatTimeInTimeZone,
+  getBrandName,
+  getBrandPlainTextUrl,
+  normalizeReportOptions,
+  type ReportRenderInput,
+} from './helpers.js'
 
 interface OrganizationInfo {
   displayName?: string
 }
 
-export function buildAllClearText(organizationInfo: OrganizationInfo | null = null): string {
-  const now = new Date()
+export function buildAllClearText(
+  organizationInfo: OrganizationInfo | null = null,
+  optionsInput: ReportRenderInput = {},
+): string {
+  const options = normalizeReportOptions(optionsInput)
+  const now = options.generatedAt
 
   return `
-Entra ID Security Report - ${formatDateEST(now)}
+Entra ID Security Report - ${formatDateInTimeZone(now, options.timezone)}
 ${organizationInfo?.displayName ? `${organizationInfo.displayName}\n` : ''}
 All Clear!
 
@@ -22,8 +33,8 @@ This automated scan successfully checked for:
 Continue following security best practices by regularly rotating credentials and reviewing application permissions.
 
 --
-Peculiar Cloud - Entra ID Security Monitoring
-Generated ${formatDateEST(now)} at ${formatTimeEST(now)}
-Visit: ${getBrandUrl()}
+${getBrandName(options)} - Entra ID Security Monitoring
+Generated ${formatDateInTimeZone(now, options.timezone)} at ${formatTimeInTimeZone(now, options.timezone)}
+Visit: ${getBrandPlainTextUrl(options)}
 `
 }

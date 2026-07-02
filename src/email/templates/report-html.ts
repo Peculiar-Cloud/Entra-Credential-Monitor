@@ -33,13 +33,17 @@ import {
 } from './design/tokens.js'
 import { escapeHtml } from './escape.js'
 import {
-  formatDateEST,
-  formatTimeEST,
+  formatDateInTimeZone,
+  formatTimeInTimeZone,
   generateAzurePortalUrl,
+  getBrandDisplayUrl,
+  getBrandName,
   getBrandUrl,
   getCriticalCount,
   getTotalApps,
   getWarningCount,
+  normalizeReportOptions,
+  type ReportRenderInput,
 } from './helpers.js'
 import { partitionByAge } from './partition.js'
 
@@ -251,22 +255,30 @@ function statusPill(sev: Severity): string {
               </td></tr></table>`
 }
 
+function stripTrailingWhitespace(html: string): string {
+  return html.replace(/[ \t]+$/gm, '')
+}
+
 // ---------------------------------------------------------------------------
 // Document
 // ---------------------------------------------------------------------------
 
-export function renderReportHtml(findings: Findings, graceDays: number): string {
+export function renderReportHtml(findings: Findings, optionsInput: ReportRenderInput = {}): string {
+  const options = normalizeReportOptions(optionsInput)
   const expired = getCriticalCount(findings)
   const expiring = getWarningCount(findings)
   const sev = severityFor(expired, expiring)
-  const now = new Date()
+  const now = options.generatedAt
   const org = findings.organizationInfo?.displayName ?? ''
   const orgSafe = escapeHtml(org)
-  const { expiringSoon, recentlyExpired, longExpired } = partitionByAge(findings, graceDays)
+  const { expiringSoon, recentlyExpired, longExpired } = partitionByAge(findings, options.graceDays)
   const hasIssues =
     expiringSoon.length + recentlyExpired.length + longExpired.length > 0 ||
     findings.selfMonitoringAlerts.length > 0
-  const dateLabel = formatDateEST(now)
+  const dateLabel = formatDateInTimeZone(now, options.timezone)
+  const brandName = escapeHtml(getBrandName(options))
+  const brandUrl = escapeHtml(getBrandUrl(options))
+  const brandDisplayUrl = escapeHtml(getBrandDisplayUrl(options))
 
   let body = ''
   if (!hasIssues) {
@@ -290,7 +302,7 @@ export function renderReportHtml(findings: Findings, graceDays: number): string 
     }
   }
 
-  return `<!DOCTYPE html>
+  return stripTrailingWhitespace(`<!DOCTYPE html>
 <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8">
@@ -334,7 +346,7 @@ export function renderReportHtml(findings: Findings, graceDays: number): string 
             <td class="pad" style="padding:34px 40px 30px;border-bottom:1px solid ${COLOR.border};">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;"><tr>
                 <td class="mono" style="vertical-align:middle;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:${COLOR.text2};">
-                  <span style="display:inline-block;width:8px;height:8px;background:${COLOR.text};vertical-align:middle;margin-right:9px;">&nbsp;</span>Peculiar Cloud
+                  <span style="display:inline-block;width:8px;height:8px;background:${COLOR.text};vertical-align:middle;margin-right:9px;">&nbsp;</span>${brandName}
                 </td>
                 <td align="right" class="mono" style="vertical-align:middle;font-size:11px;color:${COLOR.text3};">${dateLabel}</td>
               </tr></table>
@@ -373,10 +385,10 @@ export function renderReportHtml(findings: Findings, graceDays: number): string 
           <tr>
             <td class="pad" style="padding:24px 40px 30px;border-top:1px solid ${COLOR.border};background:${COLOR.raised};">
               <span class="mono" style="font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:${COLOR.text2};">
-                <span style="display:inline-block;width:7px;height:7px;background:${COLOR.text3};vertical-align:middle;margin-right:8px;">&nbsp;</span>Peculiar Cloud
+                <span style="display:inline-block;width:7px;height:7px;background:${COLOR.text3};vertical-align:middle;margin-right:8px;">&nbsp;</span>${brandName}
               </span>
               <p style="margin:12px 0 0;font-family:${FONT_SANS};font-size:12px;line-height:1.6;color:${COLOR.text3};">Automated Entra ID security monitoring</p>
-              <p class="mono" style="margin:4px 0 0;font-size:11px;color:${COLOR.text3};">Generated ${dateLabel} at ${formatTimeEST(now)} · <a href="${getBrandUrl()}" style="color:${COLOR.text2};text-decoration:none;">peculiar.cloud</a></p>
+              <p class="mono" style="margin:4px 0 0;font-size:11px;color:${COLOR.text3};">Generated ${dateLabel} at ${formatTimeInTimeZone(now, options.timezone)} · <a href="${brandUrl}" style="color:${COLOR.text2};text-decoration:none;">${brandDisplayUrl}</a></p>
             </td>
           </tr>
 
@@ -386,5 +398,5 @@ export function renderReportHtml(findings: Findings, graceDays: number): string 
     </tr>
   </table>
 </body>
-</html>`
+</html>`)
 }

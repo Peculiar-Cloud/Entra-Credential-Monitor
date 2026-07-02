@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { createLogger } from './logger.js'
 import { main, type RunDeps } from './run.js'
 import type { TenantConfig } from './schemas.js'
 
@@ -28,6 +29,7 @@ function makeDeps(over: Partial<RunDeps> = {}): RunDeps {
       success: vi.fn(async () => {}),
       fail: vi.fn(async () => {}),
     },
+    logger: createLogger('silent'),
     ...over,
   } as RunDeps
 }

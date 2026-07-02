@@ -3,6 +3,16 @@
  */
 
 import { z } from 'zod'
+import { LOG_LEVELS } from './logger.js'
+
+function isValidTimeZone(timezone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format()
+    return true
+  } catch {
+    return false
+  }
+}
 
 // Tenant configuration schema
 // Using z.guid() for permissive UUID validation (Zod v4 z.uuid() is RFC-strict)
@@ -50,6 +60,18 @@ export const EnvConfigSchema = z.object({
 
   // Healthchecks.io
   HEALTHCHECKS_PING_URL: z.string().optional(),
+
+  // Runtime logging
+  LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
+
+  // Report presentation
+  REPORT_TIMEZONE: z
+    .string()
+    .trim()
+    .refine(isValidTimeZone, 'REPORT_TIMEZONE must be a valid IANA time zone')
+    .default('America/New_York'),
+  REPORT_BRAND_NAME: z.string().trim().min(1).default('Peculiar Cloud'),
+  REPORT_BRAND_URL: z.url().default('https://peculiar.cloud'),
 })
 
 export type EnvConfig = z.infer<typeof EnvConfigSchema>
@@ -227,7 +249,9 @@ export function parseTenantConfigs(env: Partial<EnvConfig>): TenantConfig[] {
     if (singleTenant.success) {
       tenants.push(singleTenant.data)
     } else {
-      console.error('Invalid single tenant config:', singleTenant.error.message)
+      throw new Error(
+        `Single-tenant configuration failed validation: ${singleTenant.error.message}`,
+      )
     }
   }
 

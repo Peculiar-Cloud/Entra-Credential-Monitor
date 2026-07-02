@@ -14,6 +14,7 @@ const base: Findings = {
 describe('generateReport', () => {
   it('all-clear: subject + html + text', () => {
     const r = generateReport(base, 90)
+    expect(r.subject).toContain('Peculiar Cloud')
     expect(r.subject).toContain('All Clear')
     expect(r.subject).toContain('[Acme Corp]')
     expect(r.html).toContain('All clear')
@@ -51,5 +52,16 @@ describe('generateReport', () => {
     )
     expect(r.subject).toContain('Monitoring System Alert')
     expect(r.html).toContain('Monitor health')
+  })
+
+  it('uses configured brand name in the subject', () => {
+    const r = generateReport(base, {
+      graceDays: 90,
+      timezone: 'UTC',
+      brand: { name: 'Contoso Security', url: 'https://security.contoso.example' },
+    })
+
+    expect(r.subject).toContain('Contoso Security')
+    expect(r.subject).not.toContain('Peculiar Cloud')
   })
 })

@@ -26,6 +26,7 @@ credentials break production integrations.
 - Zod 4 for environment and Microsoft Graph response validation.
 - `@azure/identity` and `@microsoft/microsoft-graph-client`.
 - Resend 6 for email delivery.
+- Pino 10 for structured runtime logging.
 - Vitest 4 and Biome 2.
 
 ## Features
@@ -102,8 +103,8 @@ Grant admin consent after adding the permissions.
 ## Configuration
 
 The app reads normal environment variables. You can use Node's `--env-file`,
-GitHub Actions secrets, 1Password `op run`, Doppler, chamber, SOPS, or any other
-secret injection mechanism.
+GitHub Actions secrets, or any secret manager that injects environment variables
+into the process.
 
 Tenant configuration has two forms. `ENTRA_TENANTS` takes precedence when set.
 
@@ -142,6 +143,10 @@ ENTRA_TENANT_NAME=Example Tenant
 | `SELF_MONITORING_WARNING_DAYS` | No | `60` | Warning window for the monitor app's own credentials. |
 | `EXPIRED_GRACE_DAYS` | No | `90` | Long-expired credentials older than this are collapsed in reports. |
 | `ALWAYS_SEND_REPORT` | No | `false` | Send all-clear reports even when no issues are found. |
+| `REPORT_TIMEZONE` | No | `America/New_York` | IANA time zone used for report dates and times. |
+| `REPORT_BRAND_NAME` | No | `Peculiar Cloud` | Brand name shown in generated report headers and footers. |
+| `REPORT_BRAND_URL` | No | `https://peculiar.cloud` | Brand link used in generated report footers. |
+| `LOG_LEVEL` | No | `info` | Structured log level: `debug`, `info`, `warn`, `error`, or `silent`. |
 | `HEALTHCHECKS_PING_URL` | No | unset | Healthchecks.io UUID or full ping URL. |
 
 ## Scheduling
@@ -231,6 +236,10 @@ Install or enable the Renovate GitHub app for the repository after publishing.
   self-monitoring check is designed to warn you early.
 
 Report security issues privately. See [SECURITY.md](SECURITY.md).
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## Support
 

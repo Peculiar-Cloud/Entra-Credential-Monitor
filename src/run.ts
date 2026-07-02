@@ -16,6 +16,7 @@ import { hasAnyIssues } from './email/templates/index.js'
 import { actions } from './github-actions.js'
 import { GraphClient } from './graph-client.js'
 import { HealthchecksClient } from './healthchecks-client.js'
+import { consoleLogger, createLogger, type Logger } from './logger.js'
 import { AppRegistrationMonitor } from './monitor/index.js'
 import {
   type EnvConfig,
@@ -66,6 +67,7 @@ export interface RunDeps {
     text: string,
   ) => Promise<boolean>
   healthchecks: HealthchecksLike
+  logger?: Logger
 }
 
 type AggregateError = Error & { emailError?: boolean }
@@ -87,16 +89,16 @@ export function getTenantConfigs(): TenantConfig[] {
   })
 }
 
-function logTenantResult(tenant: TenantConfig, findings: Findings): void {
+function logTenantResult(tenant: TenantConfig, findings: Findings, logger: Logger): void {
   const hasExpired = findings.expiredSecrets.length > 0 || findings.expiredCertificates.length > 0
   const hasExpiring =
     findings.expiringSecrets.length > 0 || findings.expiringCertificates.length > 0
 
-  console.log('Results:')
-  console.log(`  Expired secrets:       ${findings.expiredSecrets.length}`)
-  console.log(`  Expiring secrets:      ${findings.expiringSecrets.length}`)
-  console.log(`  Expired certificates:  ${findings.expiredCertificates.length}`)
-  console.log(`  Expiring certificates: ${findings.expiringCertificates.length}`)
+  logger.info('Results:')
+  logger.info(`  Expired secrets:       ${findings.expiredSecrets.length}`)
+  logger.info(`  Expiring secrets:      ${findings.expiringSecrets.length}`)
+  logger.info(`  Expired certificates:  ${findings.expiredCertificates.length}`)
+  logger.info(`  Expiring certificates: ${findings.expiringCertificates.length}`)
 
   if (hasExpired) {
     actions.error(
@@ -117,10 +119,12 @@ function logTenantResult(tenant: TenantConfig, findings: Findings): void {
  * Orchestrate a full monitoring run. Returns the process exit code.
  */
 export async function main(env: EnvConfig, deps: RunDeps): Promise<number> {
-  console.log(`[${new Date().toISOString()}] Starting scheduled monitoring run...`)
+  const logger = deps.logger ?? consoleLogger
+
+  logger.info(`[${new Date().toISOString()}] Starting scheduled monitoring run...`)
 
   await deps.healthchecks.start().catch((err: Error) => {
-    console.warn('Failed to send start ping to healthchecks.io:', err.message)
+    logger.warn({ err }, 'Failed to send start ping to healthchecks.io')
   })
 
   actions.startGroup('Initializing')
@@ -131,10 +135,10 @@ export async function main(env: EnvConfig, deps: RunDeps): Promise<number> {
     const err = new Error(
       'No tenant configurations found. Set ENTRA_TENANTS JSON array or ENTRA_TENANT_ID/CLIENT_ID/CLIENT_SECRET',
     )
-    return failRun(env, deps, err)
+    return failRun(env, deps, err, logger)
   }
 
-  console.log(`Tenants configured: ${tenants.length}`)
+  logger.info(`Tenants configured: ${tenants.length}`)
   actions.endGroup()
 
   const results: TenantResult[] = []
@@ -145,7 +149,7 @@ export async function main(env: EnvConfig, deps: RunDeps): Promise<number> {
     try {
       const tenantEnv: EnvConfig = { ...env, ENTRA_CLIENT_ID: tenant.clientId }
       const findings = await deps.scanTenant(tenant, tenantEnv)
-      logTenantResult(tenant, findings)
+      logTenantResult(tenant, findings, logger)
 
       const emailSent = await deps.sendReport(tenantEnv, findings)
       if (emailSent) {
@@ -162,22 +166,22 @@ export async function main(env: EnvConfig, deps: RunDeps): Promise<number> {
     }
   }
 
-  printSummary(results, errors, tenants.length)
+  printSummary(results, errors, tenants.length, logger)
 
   if (errors.length > 0) {
     const isEmailError = errors.some((e) => (e.error as AggregateError).emailError)
     const err: AggregateError = new Error(`${errors.length} tenant(s) failed to process`)
     err.emailError = isEmailError
-    return failRun(env, deps, err)
+    return failRun(env, deps, err, logger)
   }
 
-  console.log(`\n[${new Date().toISOString()}] Monitoring completed successfully`)
+  logger.info(`\n[${new Date().toISOString()}] Monitoring completed successfully`)
   actions.writeSummary(
     generateActionsSummaryFromResults({ results, totalTenants: tenants.length, warningDays: 0 }),
   )
 
   await deps.healthchecks.success().catch((err: Error) => {
-    console.warn('Failed to send success ping to healthchecks.io:', err.message)
+    logger.warn({ err }, 'Failed to send success ping to healthchecks.io')
   })
 
   return 0
@@ -188,8 +192,13 @@ export async function main(env: EnvConfig, deps: RunDeps): Promise<number> {
  * error notification (unless the failure itself was an email failure), and ping
  * healthchecks.io. Returns exit code 1.
  */
-async function failRun(env: EnvConfig, deps: RunDeps, error: AggregateError): Promise<number> {
-  console.error(`\n[${new Date().toISOString()}] Monitoring failed:`, error)
+async function failRun(
+  env: EnvConfig,
+  deps: RunDeps,
+  error: AggregateError,
+  logger: Logger,
+): Promise<number> {
+  logger.error({ err: error }, 'Monitoring failed')
   actions.error(error.message, 'Monitoring Failed')
 
   actions.writeSummary(`# 🔴 Monitoring Failed
@@ -217,20 +226,25 @@ Check the workflow logs for more details.
       )
     } catch (emailError) {
       const err = emailError instanceof Error ? emailError : new Error(String(emailError))
-      console.error('Failed to send error notification:', err.message)
+      logger.error({ err }, 'Failed to send error notification')
     }
   }
 
   await deps.healthchecks.fail(error).catch((err: Error) => {
-    console.warn('Failed to send failure ping to healthchecks.io:', err.message)
+    logger.warn({ err }, 'Failed to send failure ping to healthchecks.io')
   })
 
   return 1
 }
 
-function printSummary(results: TenantResult[], errors: TenantError[], totalTenants: number): void {
+function printSummary(
+  results: TenantResult[],
+  errors: TenantError[],
+  totalTenants: number,
+  logger: Logger,
+): void {
   actions.startGroup('Summary')
-  console.log(`Tenants processed: ${results.length}/${totalTenants}`)
+  logger.info(`Tenants processed: ${results.length}/${totalTenants}`)
 
   let totalExpired = 0
   let totalExpiring = 0
@@ -244,19 +258,19 @@ function printSummary(results: TenantResult[], errors: TenantError[], totalTenan
     if (emailSent) totalEmailsSent++
 
     const orgName = findings.organizationInfo?.displayName || tenant.name
-    console.log(
+    logger.info(
       `  ${orgName}: ${expired} expired, ${expiring} expiring${emailSent ? ' (email sent)' : ''}`,
     )
   }
 
-  console.log(`\nTotal expired credentials: ${totalExpired}`)
-  console.log(`Total expiring credentials: ${totalExpiring}`)
-  console.log(`Emails sent: ${totalEmailsSent}`)
+  logger.info(`\nTotal expired credentials: ${totalExpired}`)
+  logger.info(`Total expiring credentials: ${totalExpiring}`)
+  logger.info(`Emails sent: ${totalEmailsSent}`)
 
   if (errors.length > 0) {
-    console.log(`\nErrors encountered: ${errors.length}`)
+    logger.info(`\nErrors encountered: ${errors.length}`)
     for (const { tenant, error } of errors) {
-      console.log(`  - ${tenant.name}: ${error.message}`)
+      logger.info(`  - ${tenant.name}: ${error.message}`)
     }
   }
   actions.endGroup()
@@ -268,14 +282,21 @@ function printSummary(results: TenantResult[], errors: TenantError[], totalTenan
  * healthchecks.io.
  */
 export function buildProductionDeps(env: EnvConfig): RunDeps {
-  const healthchecks = new HealthchecksClient(env.HEALTHCHECKS_PING_URL)
+  const logger = createLogger(env.LOG_LEVEL)
+  const healthchecks = new HealthchecksClient(env.HEALTHCHECKS_PING_URL, logger)
 
   return {
     getTenants: getTenantConfigs,
     scanTenant: async (tenant, tenantEnv) => {
-      const graphClient = new GraphClient(tenant.tenantId, tenant.clientId, tenant.clientSecret)
-      const monitor = new AppRegistrationMonitor(graphClient, env.WARNING_DAYS)
-      console.log('Authenticating with Microsoft Graph API...')
+      const graphClient = new GraphClient(
+        tenant.tenantId,
+        tenant.clientId,
+        tenant.clientSecret,
+        undefined,
+        logger,
+      )
+      const monitor = new AppRegistrationMonitor(graphClient, env.WARNING_DAYS, logger)
+      logger.info('Authenticating with Microsoft Graph API...')
       return monitor.scanApplications(tenantEnv)
     },
     sendReport: async (tenantEnv, findings) => {
@@ -283,15 +304,16 @@ export function buildProductionDeps(env: EnvConfig): RunDeps {
         actions.notice('No issues found - skipping email (ALWAYS_SEND_REPORT=false)')
         return false
       }
-      return sendMonitoringReport(tenantEnv, findings, console)
+      return sendMonitoringReport(tenantEnv, findings, logger)
     },
     sendErrorNotification: (errEnv, subject, html, text) =>
-      sendErrorNotification(errEnv, subject, html, text, console),
+      sendErrorNotification(errEnv, subject, html, text, logger),
     healthchecks: {
       start: () => healthchecks.start(),
       success: () => healthchecks.success(),
       fail: (error) => healthchecks.fail(error),
     },
+    logger,
   }
 }
 
