@@ -5,11 +5,18 @@ interface OrganizationInfo {
   displayName?: string
 }
 
-const LOGO_URL = 'https://peculiar.cloud/logo.avif'
+const LOGO_URL =
+  'https://peculiar.cloud/logo.avif?utm_source=entra_credential_monitor&utm_medium=email&utm_campaign=report_asset'
+const BRAND_URL =
+  'https://peculiar.cloud?utm_source=entra_credential_monitor&utm_medium=email&utm_campaign=report_footer'
 const EST_TIMEZONE = 'America/New_York'
 
 export function getLogoUrl(): string {
   return LOGO_URL
+}
+
+export function getBrandUrl(): string {
+  return BRAND_URL
 }
 
 export function formatDateEST(date: Date): string {

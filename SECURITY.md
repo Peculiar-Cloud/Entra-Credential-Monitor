@@ -5,8 +5,9 @@
 Please do not open a public issue for a vulnerability.
 
 Report security concerns privately to Peculiar Cloud through
-<https://peculiar.cloud>. Include the affected version or commit, a description
-of the issue, and enough detail to reproduce or assess the impact.
+<https://peculiar.cloud?utm_source=github&utm_medium=referral&utm_campaign=entra_credential_monitor>.
+Include the affected version or commit, a description of the issue, and enough
+detail to reproduce or assess the impact.
 
 ## Supported Versions
 

@@ -2,7 +2,8 @@
 
 [![CI](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Peculiar Cloud](https://img.shields.io/badge/by-Peculiar%20Cloud-111827)](https://peculiar.cloud)
+[![Renovate](https://img.shields.io/badge/renovate-enabled-1A1F6C.svg)](renovate.json)
+[![Peculiar Cloud](https://img.shields.io/badge/by-Peculiar%20Cloud-111827)](https://peculiar.cloud?utm_source=github&utm_medium=referral&utm_campaign=entra_credential_monitor)
 
 Scheduled credential-expiration monitoring for Microsoft Entra ID app
 registrations and service principals.
@@ -40,6 +41,12 @@ credentials break production integrations.
   loudly instead of silently trusting partial data.
 - Optionally pings Healthchecks.io on start, success, and failure.
 
+## Example Report
+
+![Example Entra Credential Monitor report](docs/report.png)
+
+[View the generated HTML example](docs/example-report.html)
+
 ## Quick Start
 
 ```sh
@@ -53,6 +60,10 @@ Fill in `.env.local`, then run:
 ```sh
 pnpm exec tsx --env-file=.env.local src/run.ts
 ```
+
+1Password is not required. The CLI reads ordinary environment variables; use
+plain `.env.local`, GitHub Actions secrets, or any secret manager you already
+trust.
 
 Build and run the compiled CLI:
 
@@ -184,6 +195,16 @@ pnpm exec tsx --env-file=.env.local scripts/redesign-preview.mts
 
 The preview is written to `~/Downloads`.
 
+## Dependency Updates
+
+Renovate is configured in [renovate.json](renovate.json):
+
+- Patch, pin, and digest updates automerge after CI passes.
+- Minor updates are grouped for review.
+- Major updates require dependency-dashboard approval.
+
+Install or enable the Renovate GitHub app for the repository after publishing.
+
 ## Security
 
 - Do not commit real `.env` files or secret-manager references.
@@ -199,7 +220,8 @@ Report security issues privately. See [SECURITY.md](SECURITY.md).
 
 Community issues and pull requests are welcome. For implementation help,
 identity-security automation, monitoring design, or Microsoft Entra hardening,
-contact Peculiar Cloud at <https://peculiar.cloud>.
+contact Peculiar Cloud at
+<https://peculiar.cloud?utm_source=github&utm_medium=referral&utm_campaign=entra_credential_monitor>.
 
 ## License
 
