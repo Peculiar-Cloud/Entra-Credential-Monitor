@@ -36,6 +36,7 @@ import {
   formatDateEST,
   formatTimeEST,
   generateAzurePortalUrl,
+  getBrandUrl,
   getCriticalCount,
   getTotalApps,
   getWarningCount,
@@ -375,7 +376,7 @@ export function renderReportHtml(findings: Findings, graceDays: number): string 
                 <span style="display:inline-block;width:7px;height:7px;background:${COLOR.text3};vertical-align:middle;margin-right:8px;">&nbsp;</span>Peculiar Cloud
               </span>
               <p style="margin:12px 0 0;font-family:${FONT_SANS};font-size:12px;line-height:1.6;color:${COLOR.text3};">Automated Entra ID security monitoring</p>
-              <p class="mono" style="margin:4px 0 0;font-size:11px;color:${COLOR.text3};">Generated ${dateLabel} at ${formatTimeEST(now)} · <a href="https://peculiar.cloud" style="color:${COLOR.text2};text-decoration:none;">peculiar.cloud</a></p>
+              <p class="mono" style="margin:4px 0 0;font-size:11px;color:${COLOR.text3};">Generated ${dateLabel} at ${formatTimeEST(now)} · <a href="${getBrandUrl()}" style="color:${COLOR.text2};text-decoration:none;">peculiar.cloud</a></p>
             </td>
           </tr>
 

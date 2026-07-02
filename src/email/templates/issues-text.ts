@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import type { CredentialFinding, Findings } from '../../schemas.js'
 import {
   generateAzurePortalUrl,
+  getBrandUrl,
   getCriticalCount,
   getTotalApps,
   getWarningCount,
@@ -125,7 +126,7 @@ Summary: ${criticalCount} critical issues, ${warningCount} warnings (${totalApps
 Peculiar Cloud • Entra ID Security Monitoring
 This automated security report helps maintain application security across your organization.
 Generated on ${format(new Date(), 'MMMM d, yyyy')} at ${format(new Date(), 'HH:mm')} UTC
-Visit: https://peculiar.cloud
+Visit: ${getBrandUrl()}
 `
 
   return text

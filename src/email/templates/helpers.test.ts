@@ -3,7 +3,9 @@ import type { CredentialFinding, Findings } from '../../schemas.js'
 import {
   generateAzurePortalUrl,
   generateSubject,
+  getBrandUrl,
   getCriticalCount,
+  getLogoUrl,
   getTotalApps,
   getWarningCount,
   hasAnyIssues,
@@ -58,6 +60,22 @@ describe('generateSubject', () => {
       displayName: 'Contoso',
     })
     expect(result).toBe('Entra ID - App Monitor [Contoso] - Critical Alert')
+  })
+})
+
+describe('getBrandUrl', () => {
+  it('includes UTM parameters for report-footer attribution', () => {
+    expect(getBrandUrl()).toBe(
+      'https://peculiar.cloud?utm_source=entra_credential_monitor&utm_medium=email&utm_campaign=report_footer',
+    )
+  })
+})
+
+describe('getLogoUrl', () => {
+  it('includes UTM parameters for report-asset attribution', () => {
+    expect(getLogoUrl()).toBe(
+      'https://peculiar.cloud/logo.avif?utm_source=entra_credential_monitor&utm_medium=email&utm_campaign=report_asset',
+    )
   })
 })
 

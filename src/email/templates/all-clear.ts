@@ -1,4 +1,4 @@
-import { formatDateEST, formatTimeEST } from './helpers.js'
+import { formatDateEST, formatTimeEST, getBrandUrl } from './helpers.js'
 
 interface OrganizationInfo {
   displayName?: string
@@ -24,6 +24,6 @@ Continue following security best practices by regularly rotating credentials and
 --
 Peculiar Cloud - Entra ID Security Monitoring
 Generated ${formatDateEST(now)} at ${formatTimeEST(now)}
-Visit: https://peculiar.cloud
+Visit: ${getBrandUrl()}
 `
 }
