@@ -22,7 +22,7 @@
     "service-principals",
     "security-monitoring"
   ],
-  "packageManager": "pnpm@11.5.1",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "build": "tsc",
     "start": "node dist/run.js",
@@ -45,18 +45,18 @@
   "dependencies": {
     "@azure/identity": "^4.13.1",
     "@microsoft/microsoft-graph-client": "^3.0.7",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "pino": "^10.3.1",
-    "resend": "^6.9.2",
-    "zod": "^4.3.5"
+    "resend": "^6.16.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.0",
-    "@types/node": "^25.0.8",
-    "@vitest/coverage-v8": "^4.1.8",
-    "tsx": "^4.15.0",
+    "@biomejs/biome": "^2.5.2",
+    "@types/node": "^26.1.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.9"
   }
 }
