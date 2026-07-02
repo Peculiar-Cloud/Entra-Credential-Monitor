@@ -12,9 +12,9 @@ plain configuration as repository variables.
 ```mermaid
 flowchart TD
   Trigger["Monthly schedule or manual workflow_dispatch"] --> Checkout["Check out repository"]
-  Checkout --> Pnpm["Install pnpm"]
-  Pnpm --> Node["Set up Node.js 24 with pnpm cache"]
-  Node --> Install["pnpm install --frozen-lockfile"]
+  Checkout --> Node["Set up Node.js 24"]
+  Node --> Pnpm["Activate pnpm with Corepack"]
+  Pnpm --> Install["pnpm install --frozen-lockfile"]
   Install --> Build["pnpm build"]
   Build --> Secrets["Inject GitHub Actions secrets and variables"]
   Secrets --> Monitor["node dist/run.js"]
@@ -51,19 +51,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.5.1
-          run_install: false
-
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: pnpm
 
       - name: Install dependencies
         run: |
           corepack enable
+          corepack prepare pnpm@11.5.1 --activate
           pnpm install --frozen-lockfile
 
       - name: Build
