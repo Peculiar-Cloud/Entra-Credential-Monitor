@@ -5,7 +5,8 @@
 
 import { appendFileSync } from 'node:fs'
 
-const isGitHubActions = !!process.env.GITHUB_ACTIONS
+const isGitHubActions =
+  !!process.env.GITHUB_ACTIONS && process.env.ENTRA_DISABLE_GITHUB_ACTIONS_COMMANDS !== 'true'
 
 /**
  * GitHub Actions workflow commands for nice output

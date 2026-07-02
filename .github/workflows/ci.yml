@@ -33,4 +33,9 @@ jobs:
           pnpm install --frozen-lockfile
 
       - name: Verify
+        env:
+          # Unit tests intentionally exercise the GitHub Actions log helpers.
+          # Keep the raw output visible, but do not let test fixtures create
+          # misleading annotations on a successful CI run.
+          ENTRA_DISABLE_GITHUB_ACTIONS_COMMANDS: "true"
         run: pnpm verify
