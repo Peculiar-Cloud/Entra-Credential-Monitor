@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           corepack enable
-          corepack prepare pnpm@11.5.1 --activate
+          corepack prepare pnpm@11.9.0 --activate
           pnpm install --frozen-lockfile
 
       - name: Verify
@@ -45,7 +45,7 @@ jobs:
       - uses: docker/setup-buildx-action@v4.1.0
 
       - name: Build image
-        uses: docker/build-push-action@v7.2.0
+        uses: docker/build-push-action@v7.3.0
         with:
           context: .
           load: true

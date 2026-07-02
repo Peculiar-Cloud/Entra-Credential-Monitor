@@ -74,7 +74,7 @@ jobs:
       - name: Install dependencies
         run: |
           corepack enable
-          corepack prepare pnpm@11.5.1 --activate
+          corepack prepare pnpm@11.9.0 --activate
           pnpm install --frozen-lockfile
 
       - name: Build
