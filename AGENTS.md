@@ -43,6 +43,7 @@ does not bundle dotenv.
   source of valid env var names.
 - `src/github-actions.ts` - GitHub/Forgejo-compatible log and summary helpers.
 - `src/logger.ts` - Pino logger wiring; use `LOG_LEVEL` for runtime verbosity.
+- `Dockerfile` - rootless Chainguard runtime image for scheduled container runs.
 
 ## Conventions
 

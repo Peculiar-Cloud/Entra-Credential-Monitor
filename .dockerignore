@@ -1,0 +1,13 @@
+.git
+.github
+.vscode
+coverage
+dist
+docs
+node_modules
+npm-debug.log*
+*.local
+*.tgz
+.env
+.env.*
+!.env.example

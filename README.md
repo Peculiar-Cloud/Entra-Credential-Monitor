@@ -1,6 +1,9 @@
 # Entra Credential Monitor
 
 [![CI](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/codeql.yml/badge.svg)](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/codeql.yml)
+[![Container](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/container.yml/badge.svg)](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/actions/workflows/container.yml)
+[![GHCR](https://img.shields.io/badge/image-ghcr.io%2Fpeculiar--cloud%2Fentra--credential--monitor-blue)](https://github.com/Peculiar-Cloud/Entra-Credential-Monitor/pkgs/container/entra-credential-monitor)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-1A1F6C.svg)](renovate.json)
 [![Peculiar Cloud](https://img.shields.io/badge/by-Peculiar%20Cloud-111827)](https://peculiar.cloud)
@@ -27,6 +30,7 @@ credentials break production integrations.
 - `@azure/identity` and `@microsoft/microsoft-graph-client`.
 - Resend 6 for email delivery.
 - Pino 10 for structured runtime logging.
+- Chainguard non-root Node runtime for the optional container image.
 - Vitest 4 and Biome 2.
 
 ## Features
@@ -41,6 +45,7 @@ credentials break production integrations.
 - Validates Microsoft Graph responses with Zod and skips malformed records
   loudly instead of silently trusting partial data.
 - Optionally pings Healthchecks.io on start, success, and failure.
+- Ships a rootless GHCR container image for schedulers that prefer Docker.
 
 ## Example Report
 
@@ -71,6 +76,12 @@ Build and run the compiled CLI:
 ```sh
 pnpm build
 node --env-file=.env.local dist/run.js
+```
+
+Run the published container image:
+
+```sh
+docker run --rm --env-file .env.local ghcr.io/peculiar-cloud/entra-credential-monitor:latest
 ```
 
 ## Microsoft Entra Setup
@@ -152,7 +163,8 @@ ENTRA_TENANT_NAME=Example Tenant
 ## Scheduling
 
 See [GitHub Actions deployment](docs/github-actions.md) for a scheduled workflow
-example. The same command works from any scheduler:
+example and [container image deployment](docs/container.md) for Docker-based
+schedulers. The same command works from any scheduler:
 
 ```sh
 node dist/run.js
@@ -224,7 +236,8 @@ Renovate is configured in [renovate.json](renovate.json):
 - Minor updates are grouped for review.
 - Major updates require dependency-dashboard approval.
 
-Install or enable the Renovate GitHub app for the repository after publishing.
+The Renovate GitHub app must be enabled for the repository or organization for
+this config to run.
 
 ## Security
 
@@ -234,6 +247,8 @@ Install or enable the Renovate GitHub app for the repository after publishing.
   store.
 - Rotate the monitor app's own credential before it expires; the
   self-monitoring check is designed to warn you early.
+- The published container image runs as non-root UID/GID `65532` and is scanned
+  with Trivy in CI.
 
 Report security issues privately. See [SECURITY.md](SECURITY.md).
 
