@@ -158,13 +158,29 @@ the process.
 
 ## Architecture
 
-```text
-src/run.ts
-  -> Healthchecks.io start ping
-  -> GraphClient fetches app registrations and service principals
-  -> AppRegistrationMonitor analyzes credentials and self-monitoring alerts
-  -> EmailService sends the Resend report
-  -> Healthchecks.io success/failure ping
+```mermaid
+flowchart TD
+  Scheduler["Scheduler<br/>GitHub Actions, Forgejo Actions, cron"] --> Runner["node dist/run.js"]
+  Runner --> Env["Load and validate environment<br/>Zod schemas"]
+  Env --> Tenants{"Tenant configuration"}
+  Tenants --> Multi["ENTRA_TENANTS JSON array"]
+  Tenants --> Single["Single ENTRA_* tenant"]
+  Multi --> ScanLoop["Scan each tenant"]
+  Single --> ScanLoop
+
+  Runner --> StartPing["Healthchecks.io start ping"]
+  ScanLoop --> Graph["GraphClient<br/>Microsoft Graph SDK"]
+  Graph --> Apps["App registrations"]
+  Graph --> Principals["Service principals"]
+  Apps --> Analyze["AppRegistrationMonitor"]
+  Principals --> Analyze
+  Analyze --> Findings["Expired and expiring credentials<br/>plus monitor self-checks"]
+  Findings --> Report["HTML and text report"]
+  Report --> Resend["Resend email delivery"]
+  Resend --> Summary["Actions log and step summary"]
+  Summary --> FinalPing{"Run result"}
+  FinalPing --> Success["Healthchecks.io success ping"]
+  FinalPing --> Failure["Healthchecks.io failure ping"]
 ```
 
 Key implementation details:
