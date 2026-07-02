@@ -175,29 +175,44 @@ the process.
 
 ## Architecture
 
+Each scheduled run has one job: load tenant configuration, scan Microsoft Graph,
+and deliver a report before exiting.
+
 ```mermaid
 flowchart TD
-  Scheduler["Scheduler<br/>GitHub Actions, Forgejo Actions, cron"] --> Runner["node dist/run.js"]
-  Runner --> Env["Load and validate environment<br/>Zod schemas"]
-  Env --> Tenants{"Tenant configuration"}
-  Tenants --> Multi["ENTRA_TENANTS JSON array"]
-  Tenants --> Single["Single ENTRA_* tenant"]
-  Multi --> ScanLoop["Scan each tenant"]
-  Single --> ScanLoop
+  Scheduler["Scheduler<br/>GitHub Actions, Forgejo Actions, cron"] --> CLI["CLI process<br/>node dist/run.js"]
 
-  Runner --> StartPing["Healthchecks.io start ping"]
-  ScanLoop --> Graph["GraphClient<br/>Microsoft Graph SDK"]
-  Graph --> Apps["App registrations"]
-  Graph --> Principals["Service principals"]
-  Apps --> Analyze["AppRegistrationMonitor"]
-  Principals --> Analyze
-  Analyze --> Findings["Expired and expiring credentials<br/>plus monitor self-checks"]
-  Findings --> Report["HTML and text report"]
-  Report --> Resend["Resend email delivery"]
-  Resend --> Summary["Actions log and step summary"]
-  Summary --> FinalPing{"Run result"}
-  FinalPing --> Success["Healthchecks.io success ping"]
-  FinalPing --> Failure["Healthchecks.io failure ping"]
+  subgraph Config["1. Configuration"]
+    CLI --> Env["Read environment variables"]
+    Env --> Validate["Validate values with Zod"]
+    Validate --> TenantSource{"Tenant source"}
+    TenantSource --> MultiTenant["ENTRA_TENANTS<br/>JSON array"]
+    TenantSource --> SingleTenant["Single tenant<br/>ENTRA_* variables"]
+  end
+
+  subgraph Scan["2. Microsoft Graph scan"]
+    MultiTenant --> TenantLoop["Scan each configured tenant"]
+    SingleTenant --> TenantLoop
+    TenantLoop --> Graph["Microsoft Graph SDK<br/>paged API reads"]
+    Graph --> Apps["App registrations"]
+    Graph --> ServicePrincipals["Service principals"]
+    Apps --> Analyze["Check client secrets<br/>and certificates"]
+    ServicePrincipals --> Analyze
+    Analyze --> Findings["Find expired credentials,<br/>soon-expiring credentials,<br/>and monitor self-checks"]
+  end
+
+  subgraph Delivery["3. Report delivery"]
+    Findings --> Templates["Render HTML and text email"]
+    Templates --> Resend["Send through Resend"]
+    Resend --> Summary["Write workflow logs<br/>and job summary"]
+  end
+
+  subgraph Monitoring["4. Optional run monitoring"]
+    CLI --> StartPing["Healthchecks.io start ping"]
+    Summary --> Result{"Run result"}
+    Result --> SuccessPing["Success ping"]
+    Result --> FailurePing["Failure ping"]
+  end
 ```
 
 Key implementation details:

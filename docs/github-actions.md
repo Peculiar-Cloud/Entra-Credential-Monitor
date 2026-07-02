@@ -9,18 +9,34 @@ plain configuration as repository variables.
 
 ## Workflow Flow
 
+The deployment workflow has two responsibilities: prepare the Node CLI, then run
+it with secrets and repository variables injected as environment variables.
+
 ```mermaid
 flowchart TD
-  Trigger["Monthly schedule or manual workflow_dispatch"] --> Checkout["Check out repository"]
-  Checkout --> Node["Set up Node.js 24"]
-  Node --> Pnpm["Activate pnpm with Corepack"]
-  Pnpm --> Install["pnpm install --frozen-lockfile"]
-  Install --> Build["pnpm build"]
-  Build --> Secrets["Inject GitHub Actions secrets and variables"]
-  Secrets --> Monitor["node dist/run.js"]
-  Monitor --> Graph["Read Entra app and service-principal credentials"]
-  Monitor --> Resend["Send report through Resend"]
-  Monitor --> Healthchecks["Ping Healthchecks.io when configured"]
+  Trigger["Schedule<br/>or workflow_dispatch"] --> Checkout
+
+  subgraph Prepare["Prepare CLI"]
+    Checkout["Check out repository"] --> Node["Set up Node.js 24"]
+    Node --> Pnpm["Enable Corepack<br/>and activate pnpm"]
+    Pnpm --> Install["Install dependencies<br/>pnpm install --frozen-lockfile"]
+    Install --> Build["Build TypeScript<br/>pnpm build"]
+  end
+
+  subgraph RuntimeConfig["Inject runtime configuration"]
+    Secrets["GitHub Actions secrets<br/>tenant IDs, client secrets,<br/>Resend API key, recipients"]
+    Vars["Repository variables<br/>tenant name, warning windows,<br/>branding, log level"]
+  end
+
+  Build --> Run["Run monitor<br/>node dist/run.js"]
+  Secrets --> Run
+  Vars --> Run
+
+  subgraph ExternalServices["External services used by the run"]
+    Run --> Graph["Microsoft Graph<br/>read app and service-principal credentials"]
+    Run --> Resend["Resend<br/>deliver the email report"]
+    Run --> Healthchecks["Healthchecks.io<br/>optional start/success/failure pings"]
+  end
 ```
 
 ## Single-Tenant Workflow
