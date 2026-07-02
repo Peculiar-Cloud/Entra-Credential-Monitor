@@ -1,0 +1,6 @@
+# Fake credential identifier in a test fixture, not a real secret. The value is a
+# placeholder Entra credential secretId used to render the report HTML in tests;
+# gitleaks generic-api-key fires on the "secretId" key name. Allowlisted by
+# fingerprint so the staged-commit scan stays green on it while still catching
+# any genuinely new secret.
+src/email/templates/report-html.test.ts:generic-api-key:25

@@ -1,0 +1,19 @@
+# Git hooks for this repo. Run `lefthook install` once after cloning to wire them
+# into .git/hooks. Requires lefthook + gitleaks on PATH
+# (`brew install lefthook gitleaks`).
+#
+# pre-commit: a preventive secret scan, the same gitleaks the org runs post-hoc,
+# applied locally so a secret never reaches a commit. A test fixture carries a
+# fake credential id that trips generic-api-key; it is allowlisted by fingerprint
+# in .gitleaksignore, so the scan stays green on it while still catching new
+# secrets.
+# pre-push: the verify gate (lint + typecheck + test + build), matching CI.
+pre-commit:
+  parallel: true
+  commands:
+    gitleaks:
+      run: gitleaks git --staged --no-banner --redact
+pre-push:
+  commands:
+    verify:
+      run: pnpm verify

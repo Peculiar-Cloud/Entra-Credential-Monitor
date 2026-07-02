@@ -1,0 +1,51 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+
+# Build output
+build/
+dist/
+out/
+.cache/
+.parcel-cache/
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment files
+# Keep real tenant IDs, client IDs, secrets, recipients, and deployment-specific
+# secret-manager references out of the public repository.
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+
+# Docker artifacts
+docker-data/
+
+# Local-only brainstorming specs and implementation plans.
+docs/superpowers/
