@@ -7,6 +7,22 @@ your own deployment repository.
 The workflow assumes you store sensitive values as GitHub Actions secrets and
 plain configuration as repository variables.
 
+## Workflow Flow
+
+```mermaid
+flowchart TD
+  Trigger["Monthly schedule or manual workflow_dispatch"] --> Checkout["Check out repository"]
+  Checkout --> Pnpm["Install pnpm"]
+  Pnpm --> Node["Set up Node.js 24 with pnpm cache"]
+  Node --> Install["pnpm install --frozen-lockfile"]
+  Install --> Build["pnpm build"]
+  Build --> Secrets["Inject GitHub Actions secrets and variables"]
+  Secrets --> Monitor["node dist/run.js"]
+  Monitor --> Graph["Read Entra app and service-principal credentials"]
+  Monitor --> Resend["Send report through Resend"]
+  Monitor --> Healthchecks["Ping Healthchecks.io when configured"]
+```
+
 ## Single-Tenant Workflow
 
 ```yaml
@@ -34,6 +50,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.1
+          run_install: false
 
       - uses: actions/setup-node@v6
         with:
