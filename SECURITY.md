@@ -20,3 +20,9 @@ This repository should not contain real tenant IDs, client IDs, client secrets,
 Resend API keys, recipient lists, Healthchecks URLs, or secret-manager
 references. Use `.env.example` only as a template and keep real values in your
 scheduler or secret manager.
+
+## Container Image
+
+The published GHCR image runs as non-root UID/GID `65532`. Pull request builds
+verify the runtime user and scan the image for critical vulnerabilities with
+Trivy. Release builds publish GitHub provenance attestations.

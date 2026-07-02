@@ -2,6 +2,15 @@
 
 All notable changes to Entra Credential Monitor are documented here.
 
+## 2.1.0 - 2026-07-02
+
+- Added contributing guidance, issue templates, and a pull request template.
+- Added CodeQL security scanning.
+- Added a rootless Chainguard-based Docker image and GHCR publish workflow with
+  Trivy scanning and GitHub provenance attestations.
+- Added PR-time container build, vulnerability scan, and non-root runtime check.
+- Documented container deployment and published-image verification.
+
 ## 2.0.0 - 2026-07-02
 
 - Prepared the project as a public, reusable CLI with sanitized examples and no

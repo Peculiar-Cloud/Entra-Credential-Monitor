@@ -34,3 +34,35 @@ jobs:
           # misleading annotations on a successful CI run.
           ENTRA_DISABLE_GITHUB_ACTIONS_COMMANDS: "true"
         run: pnpm verify
+
+  container:
+    name: Container image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4.1.0
+
+      - name: Build image
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: .
+          load: true
+          tags: entra-credential-monitor:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify non-root runtime
+        run: |
+          uid="$(docker run --rm --entrypoint /usr/bin/node entra-credential-monitor:ci -e "process.stdout.write(String(process.getuid?.() ?? -1))")"
+          test "$uid" != "0"
+
+      - name: Scan image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: entra-credential-monitor:ci
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"

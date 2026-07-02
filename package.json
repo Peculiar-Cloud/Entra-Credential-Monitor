@@ -1,6 +1,6 @@
 {
   "name": "entra-credential-monitor",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Monitor Microsoft Entra ID app and service-principal credentials for upcoming expiration",
   "type": "module",
   "main": "dist/run.js",
