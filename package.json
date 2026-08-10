@@ -22,7 +22,7 @@
     "service-principals",
     "security-monitoring"
   ],
-  "packageManager": "pnpm@11.19.0",
+  "packageManager": "pnpm@11.20.0",
   "scripts": {
     "build": "tsc",
     "start": "node dist/run.js",
